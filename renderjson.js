@@ -110,47 +110,58 @@ var module;
                 show();
             return el;
         };
+        
+        var _bbtype = json.type;
+        var _bbvalue = json.value;
 
-        if (json === null) return themetext(null, my_indent, "keyword", "null");
-        if (json === void 0) return themetext(null, my_indent, "keyword", "undefined");
+        if (_bbtype === "betal") return themetext(null, my_indent, "betal", _bbvalue);
+        
+        if (_bbtype === "number") return themetext(null, my_indent, "number", _bbvalue);
+        
+        if (_bbtype === "binary") return themetext(null, my_indent, "binary", "[Binary]");
+        
+        if (_bbtype === "function") return themetext(null, my_indent, "function", "[Function]");
 
-        if (typeof(json) == "string" && json.length > max_string)
-            return disclosure('"', json.substr(0,max_string)+" ...", '"', "string", function () {
-                return append(span("string"), themetext(null, my_indent, "string", JSON.stringify(json)));
+        if (_bbtype === "string" && _bbvalue.length > max_string)
+            return disclosure('"', _bbvalue.substr(0,max_string)+" ...", '"', "string", function () {
+                return append(span("string"), themetext(null, my_indent, "string", JSON.stringify(_bbvalue)));
             });
+        else if (_bbtype === "string") return themetext(null, my_indent, "string", '"' + _bbvalue + '"');
 
-        if (typeof(json) != "object") // Strings, numbers and bools
-            return themetext(null, my_indent, typeof(json), JSON.stringify(json));
+        if (_bbtype === "list") {
+            if (_bbvalue.length == 0) return themetext(null, my_indent, "array syntax", "[] (items: 0)");
 
-        if (json.constructor == Array) {
-            if (json.length == 0) return themetext(null, my_indent, "array syntax", "[]");
-
-            return disclosure("[", " ... ", "]", "array", function () {
-                var as = append(span("array"), themetext("array syntax", "[", null, "\n"));
-                for (var i=0; i<json.length; i++)
-                    append(as,
-                           _renderjson(json[i], indent+"    ", false, show_level-1, max_string, sort_objects),
-                           i != json.length-1 ? themetext("syntax", ",") : [],
-                           text("\n"));
+            return disclosure("[", "...", "] (items: " + _bbvalue.length+")", "array", function () {
+                var as = append(span("array"), themetext("array syntax", "[ ", null, "\n"));
+                var last = _bbvalue.length - 1;
+                for (var i=0; i<_bbvalue.length; i++)
+                    /*append(as,
+                           _renderjson(_bbvalue[i], indent+"    ", false, show_level-1, max_string, sort_objects),
+                           i != _bbvalue.length-1 ? themetext("syntax", ",") : [],
+                           text("\n"));*/
+                    append(as, themetext(null, indent+"    ", "key", i+'', "object syntax", ': '),
+                       _renderjson(_bbvalue[i], indent+"    ", true, show_level-1, max_string, sort_objects),
+                       i != last ? themetext("syntax", ",") : [],
+                       text("\n"));                           
                 append(as, themetext(null, indent, "array syntax", "]"));
                 return as;
             });
         }
 
         // object
-        if (isempty(json))
-            return themetext(null, my_indent, "object syntax", "{}");
+        if (isempty(_bbvalue))
+            return themetext(null, my_indent, "object syntax", "{} (keys: 0)");
 
-        return disclosure("{", "...", "}", "object", function () {
+        return disclosure("{", "...", "} (keys: " + Object.keys(_bbvalue).length + ")", "object", function () {
             var os = append(span("object"), themetext("object syntax", "{", null, "\n"));
-            for (var k in json) var last = k;
-            var keys = Object.keys(json);
+            for (var k in _bbvalue) var last = k;
+            var keys = Object.keys(_bbvalue);
             if (sort_objects)
                 keys = keys.sort();
             for (var i in keys) {
                 var k = keys[i];
                 append(os, themetext(null, indent+"    ", "key", '"'+k+'"', "object syntax", ': '),
-                       _renderjson(json[k], indent+"    ", true, show_level-1, max_string, sort_objects),
+                       _renderjson(_bbvalue[k], indent+"    ", true, show_level-1, max_string, sort_objects),
                        k != last ? themetext("syntax", ",") : [],
                        text("\n"));
             }
